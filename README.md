@@ -1,2 +1,2 @@
 # Chryssy
-Chryssy is a highly powerful hand-held geiger counter system, offering live count readouts, radiation measurement for the previous minute, WiFi connection management, battery monitoring and more.
+Chryssy is a highly powerful hand-held Geiger counter system, offering live count readouts, radiation measurement for the previous minute, WiFi connection management, battery monitoring and more.
