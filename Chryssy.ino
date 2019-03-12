@@ -51,6 +51,7 @@ bool   wasCountReset;
 bool   buttonHeld;
 bool   triggerHeld;
 
+int   geigerArray[60];
 int   geigerCounts;
 int   geigerPrevCounts;
 float geigerPrevSiev;
@@ -272,7 +273,11 @@ void drawUI() {
             display.setTextSize(2);
             display.setCursor(textLeftX(text, 2, 2), 27);
             display.print(text);
-            text = String(geigerCounts);
+            int totalCounts = 0;
+            for (int i = 0; i < 60; i++)
+                totalCounts += geigerArray[i];
+            totalCounts += geigerCounts;
+            text = String(totalCounts);
             display.setTextSize(3);
             display.setCursor(textLeftX(text, 40, 3), 20);
             display.print(text);
@@ -292,7 +297,11 @@ void processDelays() {
         else {
             delayMinute--;
         }    
-        uiStringCountdown = String(delayMinute);  
+        uiStringCountdown = String(delayMinute);
+        for (int i = 1; i < 60; i++)
+            geigerArray[i - 1] = geigerArray[i];
+        geigerArray[59] = geigerCounts;
+        geigerCounts = 0;
         drawUI();
     }
     else {
@@ -302,8 +311,11 @@ void processDelays() {
 
 void processMinute() {
     canRun = false;
-    geigerPrevCounts = geigerCounts;
-    geigerCounts = 0;
+    int totalCounts = 0;
+    for (int i = 0; i < 60; i++)
+        totalCounts += geigerArray[i];
+    totalCounts += geigerCounts;
+    geigerPrevCounts = totalCounts;
     geigerPrevSiev = ((float) geigerPrevCounts * SIEVERT_MULTI);
 
     if (WiFi.status() != WL_CONNECTED) {
@@ -367,6 +379,8 @@ void processTrigger() {
             delaySecond = 0;
             delayMinute = 60;
     
+            for (int i = 0; i < 60; i++)
+                geigerArray[i] = 0;
             geigerCounts = 0;
             geigerPrevCounts = 0;
             geigerPrevSiev = 0;
