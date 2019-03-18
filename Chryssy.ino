@@ -201,14 +201,14 @@ void drawUI() {
         avgBattery /= 10;
         
         if (BATTERY_VOLTAGE) {
-            float batt = (avgBattery / 1024) * BATTERY_MULTIPLIER;
+            float batt = (avgBattery / 1024) * 5;
             
             String battString = String(batt, 2) + "v";
             display.setCursor(textLeftX(battString, 0, 1), 4);
             display.print(battString);
         }
         else {
-            int batt = (((avgBattery / 1024) * BATTERY_MULTIPLIER - BATTERY_V_MIN) / (BATTERY_V_MAX - BATTERY_V_MIN)) * 100; 
+            int batt = (((avgBattery / 1024) * 5 - BATTERY_V_MIN) / (BATTERY_V_MAX - BATTERY_V_MIN)) * 100; 
             if (batt < 0)
                 batt = 0;
             else if (batt > 100)
