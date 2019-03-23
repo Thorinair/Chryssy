@@ -47,12 +47,14 @@ String uiStringCountdown;
 bool   canRun;
 bool   wifiConnecting;
 bool   wasWiFiToggled;
-bool   wasCountReset;
+bool   wasHoldToggled;
 bool   buttonHeld;
 bool   triggerHeld;
+bool   isHoldActive;
 
 int   geigerArray[60];
 int   geigerCounts;
+int   geigerHold;
 int   geigerPrevCounts;
 float geigerPrevSiev;
 
@@ -242,7 +244,7 @@ void drawUI() {
             display.print(battString);
         }    
     
-        String text = String("Prev:");
+        String text = "Prev:";
         display.setCursor(2, 46);
         display.print(text);
     
@@ -269,15 +271,28 @@ void drawUI() {
             }
         }
         else {        
-            text = String("CPM");
+            text = "CPM";
             display.setTextSize(2);
             display.setCursor(textLeftX(text, 2, 2), 27);
             display.print(text);
+            
             int totalCounts = 0;
             for (int i = 0; i < 60; i++)
                 totalCounts += geigerArray[i];
             totalCounts += geigerCounts;
-            text = String(totalCounts);
+            if (isHoldActive) {
+                text = "HOLD";
+                display.setTextSize(1);
+                display.setCursor(2, 55);
+                display.print(text);    
+                        
+                if (geigerHold < totalCounts)
+                    geigerHold = totalCounts;
+                text = String(geigerHold);                                    
+            }
+            else {
+                text = String(totalCounts);
+            }
             display.setTextSize(3);
             display.setCursor(textLeftX(text, 40, 3), 20);
             display.print(text);
@@ -311,11 +326,21 @@ void processDelays() {
 
 void processMinute() {
     canRun = false;
+    
     int totalCounts = 0;
     for (int i = 0; i < 60; i++)
         totalCounts += geigerArray[i];
-    totalCounts += geigerCounts;
-    geigerPrevCounts = totalCounts;
+    totalCounts += geigerCounts; 
+    
+    if (isHoldActive) {
+        if (geigerHold < totalCounts)
+            geigerHold = totalCounts;
+        geigerPrevCounts = geigerHold;
+    }
+    else {
+        geigerPrevCounts = totalCounts;
+    }
+    
     geigerPrevSiev = ((float) geigerPrevCounts * SIEVERT_MULTI);
 
     if (WiFi.status() != WL_CONNECTED) {
@@ -357,8 +382,8 @@ void processTrigger() {
         
     if (hitTrigger) {
         if (trigger == LOW) {
-            if (wasCountReset) {
-                wasCountReset = false;
+            if (wasHoldToggled) {
+                wasHoldToggled = false;
             }
             else {
                 uiHidden = !uiHidden;
@@ -372,22 +397,16 @@ void processTrigger() {
     }
     
     if (trigger == HIGH) {
-        if (delayTrigger >= DELAY_RESET/DELAY_INTERVAL && !wasCountReset) {
-            wasCountReset = true;      
+        if (delayTrigger >= DELAY_RESET/DELAY_INTERVAL && !wasHoldToggled) {
+            wasHoldToggled = true; 
             delayTrigger = 0;
             
-            delaySecond = 0;
-            delayMinute = 60;
-    
-            for (int i = 0; i < 60; i++)
-                geigerArray[i] = 0;
-            geigerCounts = 0;
-            geigerPrevCounts = 0;
-            geigerPrevSiev = 0;
+            geigerHold = 0;
+            isHoldActive = !isHoldActive;
              
             trigger = digitalRead(PIN_INTR_TRIGGER);
             if (trigger == LOW)  
-                wasCountReset = false;     
+                wasHoldToggled = false;     
         }
         else {
             delayTrigger++;
