@@ -355,7 +355,7 @@ void processMinute() {
     if (WiFi.status() == WL_CONNECTED) {
         int result;
         varipassWriteInt(VARIPASS_KEY, VARIPASS_ID_COUNTS, geigerPrevCounts, &result);
-        varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_SIEVERTS, geigerPrevSiev, &result);
+        varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_SIEVERTS, geigerPrevSiev, &result, 4);
     }
     canRun = true;
 }
