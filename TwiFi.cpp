@@ -122,8 +122,10 @@ int attemptWiFiConnection(char* ssid, char* pass, char* conf, bool isOpen) {
         
     }
     if (WiFi.status() == WL_CONNECTED) {
-        if (WIFI_DEBUG)
-            Serial.println("\nConnected to WiFi: '" + (String) ssid + "' With IP: " + WiFi.localIP());
+        if (WIFI_DEBUG) {
+            Serial.print("\nConnected to WiFi: '" + (String) ssid + "' With IP: ");
+            Serial.println(WiFi.localIP());
+        }
         
         /****** [ADD CODE] Insert the code to be executed when a connection is successful. You can use this for very specific cases to access internal variables. ******/
         
