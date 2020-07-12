@@ -12,7 +12,7 @@
  */
 
 /* Use voltage instead of percentage. */
-#define BATTERY_VOLTAGE false
+#define BATTERY_VOLTAGE true
  
 /* Battery voltage when empty. */
 #define BATTERY_V_MIN 2.38

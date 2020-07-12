@@ -59,6 +59,7 @@ int   geigerPrevCounts;
 float geigerPrevSiev;
 
 int valueBattery[10];
+float batt;
 
 Adafruit_SSD1306 display = Adafruit_SSD1306(OLED_WIDTH, OLED_HEIGHT, &Wire, PIN_OLED_RST);
 
@@ -197,25 +198,12 @@ void drawUI() {
         display.setCursor(textCenterX(uiStringCountdown, 1), 4);
         display.print(uiStringCountdown);   
 
-        float avgBattery = 0;
-        for (int i = 0; i < 10; i++)
-            avgBattery += valueBattery[i];
-        avgBattery /= 10;
-        
         if (BATTERY_VOLTAGE) {
-            float batt = (avgBattery / 1024) * 5;
-            
             String battString = String(batt, 2) + "v";
             display.setCursor(textLeftX(battString, 0, 1), 4);
             display.print(battString);
         }
-        else {
-            int batt = (((avgBattery / 1024) * 5 - BATTERY_V_MIN) / (BATTERY_V_MAX - BATTERY_V_MIN)) * 100; 
-            if (batt < 0)
-                batt = 0;
-            else if (batt > 100)
-                batt = 100;
-                
+        else {                
             if (batt >= 0 && batt < 10)
                 display.drawBitmap(112, 3, iconBatt00, ICON_BATT_00_WIDTH, ICON_BATT_00_HEIGHT, 1);
             else if (batt >= 10 && batt < 20)
@@ -239,10 +227,10 @@ void drawUI() {
             else if (batt >= 100)
                 display.drawBitmap(112, 3, iconBatt100, ICON_BATT_100_WIDTH, ICON_BATT_100_HEIGHT, 1);  
                    
-            String battString = String(batt) + "%";       
+            String battString = String(batt, 0) + "%";
             display.setCursor(textLeftX(battString, 16, 1), 4);
             display.print(battString);
-        }    
+        } 
     
         String text = "Prev:";
         display.setCursor(2, 46);
@@ -356,6 +344,7 @@ void processMinute() {
         int result;
         varipassWriteInt(VARIPASS_KEY, VARIPASS_ID_COUNTS, geigerPrevCounts, &result);
         varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_SIEVERTS, geigerPrevSiev, &result, 4);
+        varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_BATTERY, batt, &result, 2);
     }
     canRun = true;
 }
@@ -363,7 +352,23 @@ void processMinute() {
 void processBattery() {
     for (int i = 1; i < 10; i++)
         valueBattery[i-1] = valueBattery[i];
-    valueBattery[9] = analogRead(PIN_BATTERY);    
+    valueBattery[9] = analogRead(PIN_BATTERY);
+
+    float avgBattery = 0;
+    for (int i = 0; i < 10; i++)
+        avgBattery += valueBattery[i];
+    avgBattery /= 10;
+    
+    if (BATTERY_VOLTAGE) {
+        batt = (avgBattery / 1024) * 5;
+    }
+    else {
+        batt = (((avgBattery / 1024) * 5 - BATTERY_V_MIN) / (BATTERY_V_MAX - BATTERY_V_MIN)) * 100; 
+        if (batt < 0)
+            batt = 0;
+        else if (batt > 100)
+            batt = 100;
+    } 
 }
 
 void processGeiger() {
