@@ -1,14 +1,14 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <EEPROM.h>
-#include "ESP8266WiFi.h"
+#include <ESP8266WiFi.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <VariPass.h>
+#include <TwiFi.h>
 
-#include "Shared.h"
-#include "TwiFi.h"
 #include "Graphics.h"
+#include "ConfigurationWiFi.h"
 #include "ConfigurationBattery.h"
 #include "ConfigurationVariPass.h"
 
@@ -79,12 +79,16 @@ void processGeiger();
 void processTrigger();
 void processButton();
 
+int textCenterX(String text, int multi);
+int textLeftX(String text, int x, int multi);
+
 void ICACHE_RAM_ATTR intrGeiger();
 void ICACHE_RAM_ATTR intrTrigger();
 void ICACHE_RAM_ATTR intrButton();
 
-int textCenterX(String text, int multi);
-int textLeftX(String text, int x, int multi);
+void connectAttempt(int idEntry, int attempt);
+void connectSuccess(int idEntry);
+void connectFail(int idEntry);
 
 void setupGlobals() {
     delaySecond = 0;
@@ -137,6 +141,16 @@ void setupDisplay() {
 }
 
 void setupWiFi() {
+    twifiInit(
+        wifis,
+        WIFI_COUNT,
+        WIFI_HOST,
+        WIFI_TIMEOUT,
+        &connectAttempt,
+        &connectSuccess,
+        &connectFail,
+        WIFI_DEBUG
+        );
     WiFi.disconnect();
     EEPROM.begin(512);
     bool wasConnected = (bool) EEPROM.read(EEPROM_CONNECTED);
@@ -147,8 +161,8 @@ void setupWiFi() {
 
 void startWiFi() {
     wifiConnecting = true;
-    int wifiResult = connectWiFi(false);
-    if (wifiResult == WIFI_RESULT_DONE) {
+    bool wifiResult = twifiConnect(false);
+    if (wifiResult) {
         EEPROM.begin(512);
         EEPROM.write(EEPROM_CONNECTED, 1);  
         EEPROM.end();
@@ -169,7 +183,7 @@ void drawUI() {
 
     if (buttonHeld || wifiConnecting || !uiHidden) {
         display.setTextSize(1);
-        if (WiFi.status() == WL_CONNECTED) {      
+        if (twifiIsConnected()) {      
             int32_t rssi = WiFi.RSSI();
             if (rssi >= -70) {
                 display.drawBitmap(2, 3, iconWiFi3, ICON_WIFI_3_WIDTH, ICON_WIFI_3_HEIGHT, 1);
@@ -186,7 +200,7 @@ void drawUI() {
         }
     
         display.setCursor(17, 4);
-        if (wifiConnecting || WiFi.status() == WL_CONNECTED)
+        if (wifiConnecting || twifiIsConnected())
             display.print(uiStringWiFi);
         else
             display.print("x");
@@ -331,7 +345,7 @@ void processMinute() {
     
     geigerPrevSiev = ((float) geigerPrevCounts * SIEVERT_MULTI);
 
-    if (WiFi.status() != WL_CONNECTED) {
+    if (!twifiIsConnected()) {
         EEPROM.begin(512);
         bool wasConnected = (bool) EEPROM.read(EEPROM_CONNECTED);
         EEPROM.end();
@@ -340,7 +354,7 @@ void processMinute() {
             startWiFi();
         }
     }    
-    if (WiFi.status() == WL_CONNECTED) {
+    if (twifiIsConnected()) {
         int result;
         varipassWriteInt(VARIPASS_KEY, VARIPASS_ID_COUNTS, geigerPrevCounts, &result);
         varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_SIEVERTS, geigerPrevSiev, &result, 4);
@@ -444,7 +458,7 @@ void processButton() {
             wasWiFiToggled = true;      
             delayButton = 0;
             
-            if (WiFi.status() == WL_CONNECTED) {    
+            if (twifiIsConnected()) {    
                 stopWiFi();
                 drawUI();
             }
@@ -498,6 +512,21 @@ void ICACHE_RAM_ATTR intrButton() {
     if (canRun) {
         hitButton = true;
     }
+}
+
+void connectAttempt(int idEntry, int attempt) {
+    if (attempt % 2)
+        uiStringWiFi = String(wifis[idEntry].ssid[0]) + String(wifis[idEntry].ssid[1]) + String(wifis[idEntry].ssid[2]) + "?";
+    else 
+        uiStringWiFi = "";
+    drawUI();
+}
+
+void connectSuccess(int idEntry) {
+    uiStringWiFi = String(wifis[idEntry].ssid[0]) + String(wifis[idEntry].ssid[1]) + String(wifis[idEntry].ssid[2]);
+}
+
+void connectFail(int idEntry) {
 }
 
 void setup() {

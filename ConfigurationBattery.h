@@ -18,4 +18,4 @@
 #define BATTERY_V_MIN 2.38
 
 /* Battery voltage when full. */
-#define BATTERY_V_MAX 3.94
+#define BATTERY_V_MAX 4.34
