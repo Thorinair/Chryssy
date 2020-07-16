@@ -213,7 +213,7 @@ void drawUI() {
         display.print(uiStringCountdown);   
 
         if (BATTERY_VOLTAGE) {
-            String battString = String(batt, 2) + "v";
+            String battString = String(batt, 2) + "V";
             display.setCursor(textLeftX(battString, 0, 1), 4);
             display.print(battString);
         }
