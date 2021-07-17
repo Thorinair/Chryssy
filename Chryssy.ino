@@ -352,7 +352,7 @@ void processMinute() {
     geigerPrevSiev = ((float) geigerPrevCounts * SIEVERT_MULTI);
 
     if (geigerRandom.length() > RANDOM_LENGTH) {
-        geigerRandom.remove(16, geigerRandom.length() - 16);
+        geigerRandom.remove(0, geigerRandom.length() - 16);
     }
     else if (geigerRandom.length() < RANDOM_LENGTH) {
         do {
