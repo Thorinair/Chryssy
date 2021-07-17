@@ -517,12 +517,12 @@ int textLeftX(String text, int x, int multi) {
 void ICACHE_RAM_ATTR intrGeiger() {
     if (canRun) {
         geigerCounts++;
-        hitGeiger = true;
-        if (geigerRandom.length() < RANDOM_LENGTH) {
-            int now = millis();
-            geigerRandom += String(now - giegerLastTick);
-            giegerLastTick = now;
+        int now = millis();
+        if (geigerRandom.length() < RANDOM_LENGTH) {            
+            geigerRandom = String(now - giegerLastTick) + geigerRandom;
         }
+        giegerLastTick = now;
+        hitGeiger = true;
     }
 }
 
