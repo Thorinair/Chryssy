@@ -9,3 +9,4 @@
 #define VARIPASS_ID_COUNTS   "aaaa0000"
 #define VARIPASS_ID_SIEVERTS "aaaa0000"
 #define VARIPASS_ID_BATTERY  "aaaa0000"
+#define VARIPASS_ID_RANDOM   "aaaa0000"

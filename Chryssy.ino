@@ -30,6 +30,8 @@
 #define DELAY_WIFI     3000
 #define DELAY_RESET    3000
 
+#define RANDOM_LENGTH  16
+
 int delaySecond;
 int delayMinute;
 int delayButton;
@@ -52,11 +54,13 @@ bool   buttonHeld;
 bool   triggerHeld;
 bool   isHoldActive;
 
-int   geigerArray[60];
-int   geigerCounts;
-int   geigerHold;
-int   geigerPrevCounts;
-float geigerPrevSiev;
+int    geigerArray[60];
+int    geigerCounts;
+int    geigerHold;
+int    geigerPrevCounts;
+float  geigerPrevSiev;
+String geigerRandom;
+int    giegerLastTick;
 
 int valueBattery[10];
 float batt;
@@ -110,6 +114,8 @@ void setupGlobals() {
     geigerCounts = 0;
     geigerPrevCounts = 0;
     geigerPrevSiev = 0;
+    geigerRandom = "";
+    giegerLastTick = millis();
 }
 
 void setupPins() {
@@ -345,6 +351,15 @@ void processMinute() {
     
     geigerPrevSiev = ((float) geigerPrevCounts * SIEVERT_MULTI);
 
+    if (geigerRandom.length() > RANDOM_LENGTH) {
+        geigerRandom.remove(16, geigerRandom.length() - 16);
+    }
+    else if (geigerRandom.length() < RANDOM_LENGTH) {
+        do {
+            geigerRandom = "0" + geigerRandom;
+        } while (geigerRandom.length() < RANDOM_LENGTH);
+    }
+
     if (!twifiIsConnected()) {
         EEPROM.begin(512);
         bool wasConnected = (bool) EEPROM.read(EEPROM_CONNECTED);
@@ -359,7 +374,11 @@ void processMinute() {
         varipassWriteInt(VARIPASS_KEY, VARIPASS_ID_COUNTS, geigerPrevCounts, &result);
         varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_SIEVERTS, geigerPrevSiev, &result, 4);
         varipassWriteFloat(VARIPASS_KEY, VARIPASS_ID_BATTERY, batt, &result, 2);
+        varipassWriteString(VARIPASS_KEY, VARIPASS_ID_RANDOM, geigerRandom, &result);
     }
+
+    geigerRandom = "";
+
     canRun = true;
 }
 
@@ -499,6 +518,11 @@ void ICACHE_RAM_ATTR intrGeiger() {
     if (canRun) {
         geigerCounts++;
         hitGeiger = true;
+        if (geigerRandom.length() < RANDOM_LENGTH) {
+            int now = millis();
+            geigerRandom += String(now - giegerLastTick);
+            giegerLastTick = now;
+        }
     }
 }
 
